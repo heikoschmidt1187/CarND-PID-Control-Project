@@ -31,20 +31,31 @@ class PID {
    */
   double TotalError();
 
+  /**
+   * Calculates the control steering angle
+   * @param lower_limit The lower limit of the resulting control value
+   * @param upper_limit The upper limit of the resulting control value
+   * @output Control value of PID controller
+   */
+  double Control(double lower_limit, double upper_limit);
+
  private:
+  enum PidCoefficients {
+    K_P = 0,
+    K_I,
+    K_D,
+    K_NoOf
+  };
+
   /**
    * PID Errors
    */
-  double p_error;
-  double i_error;
-  double d_error;
+  double error[K_NoOf];
 
   /**
    * PID Coefficients
-   */ 
-  double Kp;
-  double Ki;
-  double Kd;
+   */
+  double K[K_NoOf];
 };
 
 #endif  // PID_H
