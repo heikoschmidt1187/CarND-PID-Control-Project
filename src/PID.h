@@ -3,6 +3,14 @@
 
 class PID {
  public:
+
+  enum PidCoefficients {
+    K_P = 0,
+    K_I,
+    K_D,
+    K_NoOf
+  };
+
   /**
    * Constructor
    */
@@ -39,14 +47,14 @@ class PID {
    */
   double Control(double lower_limit, double upper_limit);
 
- private:
-  enum PidCoefficients {
-    K_P = 0,
-    K_I,
-    K_D,
-    K_NoOf
-  };
+  /**
+   * Returns the current pid parameters
+   * @param coeffs Output reference to coefficient array
+   * @output void
+   */
+  void getCoefficients(double coeffs[K_NoOf]);
 
+ private:
   /**
    * PID Errors
    */

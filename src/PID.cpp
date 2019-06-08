@@ -1,5 +1,6 @@
 #include "PID.h"
 
+#include <iostream>
 #include <algorithm>
 
 /**
@@ -18,6 +19,8 @@ void PID::Init(double Kp_, double Ki_, double Kd_) {
   K[K_I] = Ki_;
   K[K_D] = Kd_;
 
+  std::cout << "Init with " << Kp_ << ", " << Ki_ << ", " << Kd_ << std::endl;
+
   for(int i = 0; i < K_NoOf; ++i)
     error[i] = 0;
 }
@@ -32,9 +35,6 @@ void PID::UpdateError(double cte) {
 }
 
 double PID::TotalError() {
-  /**
-   * TODO: Calculate and return the total error
-   */
   double total = 0.;
 
   for(int i = 0; i < K_NoOf; ++i)
@@ -55,4 +55,10 @@ double PID::Control(double lower_limit, double upper_limit)
   control_value = std::min(upper_limit, control_value);
 
   return control_value;
+}
+
+void PID::getCoefficients(double coeffs[K_NoOf])
+{
+  for(int i = 0; i < K_NoOf; ++i)
+    coeffs[i] = K[i];
 }
