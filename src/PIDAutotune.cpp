@@ -16,14 +16,22 @@ PIDAutotune::PIDAutotune(PID* cont)
 {
   controller->getCoefficients(&p[0]);
 
-  std::cout << "Current params: ";
+  /*
+  dp[0] = 0.5;
+  dp[1] = 0.05;
+  dp[2] = 5;
+  */
 
+  std::cout << "Current params: ";
   for(int i = 0; i < PID::K_NoOf; ++i) {
-    dp[i] = .5;
     std::cout << p[i] << " ";
+    //dp[i] = 0.5;
   }
 
-  dp[0] = 0.2;
+  dp[0] = 0.206753;
+  dp[1] = 0.0926509;
+  dp[2] = 0.17087;
+
 
   std::cout << std::endl;
 }
@@ -32,23 +40,23 @@ bool PIDAutotune::didFinishRun()
 {
   current_steps++;
 
-  ///std::cout << "Step: " << current_steps << std::endl;
+  //std::cout << "Step: " << current_steps << std::endl;
 
   // take about 2000 timesteps at 30mph to collect enough data for optimization
   //return (current_steps > 1000);  // around 1 round at 30mph
-  return (current_steps > 250);  // around 1 round at 30mph
+  return (current_steps > 700);  // around 1 round at 30mph
 }
 
 void PIDAutotune::addUpError(double cte)
 {
   if(current_steps > init_steps) {
-    total_cte += cte;
+    total_cte += std::fabs(cte);
   }
 }
 
-bool PIDAutotune::cteIndicatesOffTrack(double cte)
+bool PIDAutotune::cteIndicatesOffTrack(double cte, double speed)
 {
-  if((current_steps > init_steps) && (std::fabs(cte) > 6.)) {
+  if((current_steps > init_steps) && ((std::fabs(cte) > 4.) || (std::fabs(speed) < 2.))) {
     was_off_track = true;
     return true;
   } else {
@@ -75,6 +83,8 @@ bool PIDAutotune::twiddle(double tolerance)
   // penalize of thrown off track
   if(was_off_track == true)
     avg_error += 1000.;
+
+  std::cout << "*** Average error: " << avg_error << std::endl;
 
   total_cte = 0.;
   current_steps = 0;
@@ -111,7 +121,7 @@ bool PIDAutotune::twiddle(double tolerance)
           dp[current_tune_parameter] *= 1.1;
 
           // change to the next param as only one parameter is modified at a time
-          //current_tune_parameter = (current_tune_parameter + 1) % PID::K_NoOf;
+          current_tune_parameter = (current_tune_parameter + 1) % PID::K_NoOf;
 
           // modify new param
           p[current_tune_parameter] += dp[current_tune_parameter];
@@ -147,7 +157,7 @@ bool PIDAutotune::twiddle(double tolerance)
         current_state = Increment;
 
         // change to the next param as only one parameter is modified at a time
-        //current_tune_parameter = (current_tune_parameter + 1) % PID::K_NoOf;
+        current_tune_parameter = (current_tune_parameter + 1) % PID::K_NoOf;
 
         // modify new param
         p[current_tune_parameter] += dp[current_tune_parameter];
@@ -166,6 +176,7 @@ bool PIDAutotune::twiddle(double tolerance)
 
 
     controller->Init(p[PID::K_P], p[PID::K_I], p[PID::K_D]);
+
     return false;
 
   } else {

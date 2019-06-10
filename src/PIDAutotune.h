@@ -8,7 +8,7 @@ public:
   PIDAutotune(PID* cont);
 
   bool didFinishRun();
-  bool cteIndicatesOffTrack(double cte);
+  bool cteIndicatesOffTrack(double cte, double speed);
 
   void addUpError(double cte);
 
@@ -22,7 +22,7 @@ private:
   };
 
   // ignore first steps to avoid collecting errors in the speed up phase
-  static const unsigned int init_steps = 100; //100;
+  static const unsigned int init_steps = 100;
 
   TwiddleState current_state;
 

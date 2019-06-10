@@ -37,14 +37,13 @@ int main(int argc, char** argv) {
   bool tune_pid = false;
 
   PID steering_pid;
-  PID throttle_pid;
 
   /**
    * TODO: Initialize the pid variable.
    */
   //steering_pid.Init(0.2, 0., 2.);
   if(argc < 2) {
-    steering_pid.Init(0.04, 0., .2);
+    steering_pid.Init(0.257847, 0.00930742, 4.34883);
   } else {
     std::string::size_type sz;
     double Kp = std::stod(argv[1], &sz);
@@ -52,13 +51,10 @@ int main(int argc, char** argv) {
     double Kd = std::stod(argv[3], &sz);
     steering_pid.Init(Kp, Ki, Kd);
   }
-  //steering_pid.Init(0,0,0);
-  //throttle_pid.Init(0.3, 0.0005, 0.02);
-  throttle_pid.Init(0.1, 0.0001, 1);
 
   PIDAutotune auto_tuner(&steering_pid);
 
-  h.onMessage([&steering_pid, &throttle_pid, &auto_tuner, &tune_pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&steering_pid, &auto_tuner, &tune_pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -77,8 +73,6 @@ int main(int argc, char** argv) {
           double speed = std::stod(j[1]["speed"].get<string>());
           double angle = std::stod(j[1]["steering_angle"].get<string>());
           double steer_value;
-          double throttle_value;
-
 
           /**
            * TODO: Calculate steering value here, remember the steering value is
@@ -91,43 +85,36 @@ int main(int argc, char** argv) {
           steering_pid.UpdateError(cte_steering);
           steer_value = steering_pid.Control(-1., 1.);
 
-          double target_speed = 30. * (1. - abs(steer_value)) + 30.;
-          double cte_speed = speed - target_speed;
-
-          // throttle controller
-          throttle_pid.UpdateError(cte_speed);
-          throttle_value = throttle_pid.Control(-1., 1.);
-
           // DEBUG
-          /*
           std::cout << "*** Steering: " << std::endl;
           std::cout << "CTE: " << cte_steering << " Steering Value: " << steer_value
                     << std::endl;
 
-          std::cout << "*** Speed: " << std::endl;
-          std::cout << "CTE: " << cte_speed << " Throttle Value: " << throttle_value
-                    << std::endl;
-          */
-
           if(tune_pid == true) {
             auto_tuner.addUpError(cte_steering);
 
-            if((auto_tuner.didFinishRun() == true) || (auto_tuner.cteIndicatesOffTrack(cte_steering) == true)) {
+            bool off = auto_tuner.cteIndicatesOffTrack(cte_steering, speed);
+
+            if((auto_tuner.didFinishRun() == true) || (off == true)) {
               std::cout << "Twiddeling!" << std::endl;
 
               if(auto_tuner.twiddle(0.00001) == true) {
                 std::cout << "********** FINISHED TWIDDELING **********" << std::endl;
               } else {
-                // reset the simulator
-                std::string msg("42[\"reset\", {}]");
-                ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+
+                if(off == true) {
+                  // reset the simulator
+                  std::string msg("42[\"reset\", {}]");
+                  ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+
+                }
               }
             }
           }
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = throttle_value;
+          msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           //std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
