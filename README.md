@@ -3,6 +3,53 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+# Project Writeup
+
+The following sections describe the particular Rubric points.
+
+## Your code should compile.
+
+The project code compiles through the use of cmake like described in the *Basic Build Instructions* in the Udacity section of this README below.
+
+## The PID procedure follows what was taught in the lessons.
+
+The basic filter implementation is based on the implementation taught in the lesson. An auto-tuner class has been added to be able to use twiddle to find the PID parameters.
+
+## Describe the effect each of the P, I, D components had in your implementation.
+
+The P component stands for the proportional part of the PID controller. The more the car is off the desired path, the bigger the cross track error (CTE) is. For the P component, the CTE is multiplied with the Kp constant. Bigger errors mean a harder steering in this case. Changing the Kp in the project leads to great direct visual results. Higher values lead to faster reactions, but also the car can nerver reach the ideal line, so it starts to meander around the target position.
+
+The D componentent as differential part of the PID controller counteracts the P component's overshooting of the target line. If chosen properly, the car will smoothly go back to the desired target line. The higher the Kp constant, the higher the Kd needed to be. Value around Kd ~ 10 * Kp turned out to work not bad.
+
+While P-D controllers tend to bias at some point, the I or integral part of the PID controller takes care to smooth back to the target value.
+
+## Describe how the final hyperparameters were chosen.
+
+I first started to manually tune the parameters step by step, starting with a P of 0.2, I and D 0. With this the car did leave the track. Next, I tuned D to make the car drive a full round - which was possible with a value of 2.3. After about two rounds the car left the track again, which has been compensated through an I value of 0.0003. I did play with higher speeds, but the car was instable quite fast. For the project I decided to keep a constant throttle of 0.3.
+
+With the manual found values if (p=0.2 i=0.0003 d=2.3) I startet the Twiddle algorithm I implemented for around 800 cycles of 700 timesteps. First I set fixed distances and restartet the simulator automatically after each round, but in the end I modified the autotune algorithm to have a stepcount of 700 steps and drive continously around the track, except for the cases the car leaves the track or hanging at the bridge spart with a speed of 0. With this I was able to "train" the parameters on their own and stop and continue another day with setting the start p's and dp's according to the last values.
+
+The Twiddle algorithm soon seem to hang in local minimums so there wasn't improvement in the overall simulator performance. I then did some steps back and startet the autotuning with lightly manual modified p-values.
+
+In the end, the following parameters were chosen: (p=0.257847 i=0.00930742 d=4.34883).
+
+## The vehicle must successfully drive a lap around the track.
+
+I let the simulator drive the car around the track for more than four hours before submitting the project without any major incident.
+
+## Possible improvements
+
+While the performance should be ok for the project Rubric points, the car drives far from perfect. The following points may improve the handling further:
+
+* Use a PID controller for the throttle, based either on a target speed or on the current CTE so it slows down the bigger the CTE is.
+* Other functions to find the hyperparameters like SGD may be more efficient in finding optimal parameters, so it's worth a try to check them out.
+* Maybe machine learning via CNNs can automate the auto-tuning even better.
+
+
+
+
+# Original Udacity README
+
 ## Dependencies
 
 * cmake >= 3.5
@@ -19,7 +66,7 @@ Self-Driving Car Engineer Nanodegree Program
   * Run either `./install-mac.sh` or `./install-ubuntu.sh`.
   * If you install from source, checkout to commit `e94b6e1`, i.e.
     ```
-    git clone https://github.com/uWebSockets/uWebSockets 
+    git clone https://github.com/uWebSockets/uWebSockets
     cd uWebSockets
     git checkout e94b6e1
     ```
@@ -33,7 +80,7 @@ Fellow students have put together a guide to Windows set-up for the project [her
 1. Clone this repo.
 2. Make a build directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
+4. Run it: `./pid`.
 
 Tips for setting up your environment can be found [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
 
@@ -95,4 +142,3 @@ still be compilable with cmake and make./
 
 ## How to write a README
 A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
